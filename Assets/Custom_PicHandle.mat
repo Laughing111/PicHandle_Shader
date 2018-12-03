@@ -27,7 +27,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: a4c690a78402ba542bbcb6712fd0fb67, type: 3}
+        m_Texture: {fileID: 2800000, guid: e9a23154dffdb8f47a5ab5ea3ce6dbe4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OtherTex:
@@ -37,19 +37,19 @@ Material:
     m_Floats:
     - _IterationNumber: 23.9
     - _Left1BlurCenterX: -1.3
-    - _Left1BlurIntensity: 0.0196
-    - _Left1IterationNumber: 12.4
-    - _Left1OffsetX: 0.255
+    - _Left1BlurIntensity: 0.0264
+    - _Left1IterationNumber: 10.1
+    - _Left1OffsetX: 0.24
     - _Left2BlurCenterX: -1.3
-    - _Left2BlurIntensity: 0.0161
-    - _Left2IterationNumber: 12.5
-    - _Left2OffsetX: 0.05
+    - _Left2BlurIntensity: 0.0263
+    - _Left2IterationNumber: 9.09
+    - _Left2OffsetX: 0.04
     - _RBSampleDist: -7.33
     - _RBSampleStrength: 409.3
     - _RightBlurCenterX: 0
-    - _RightBlurIntensity: 0.0223
-    - _RightIterationNumber: 177.2
-    - _RightOffsetX: -0.2
+    - _RightBlurIntensity: 0.05
+    - _RightIterationNumber: 74.2
+    - _RightOffsetX: -0.17
     - _Value: 1
     - _Value2: 0
     - _Value3: 0.37
@@ -57,7 +57,9 @@ Material:
     - _offsetX: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Left1Color: {r: 0.658, g: 0.06773528, b: 0.34482858, a: 1}
-    - _Left2Color: {r: 1.4000095, g: 3.211, b: 1.2513454, a: 1}
-    - _MainColor: {r: 0.9788686, g: 1.2952275, b: 1.4162353, a: 1}
-    - _RightColor: {r: 0.06934882, g: 0.3368372, b: 0.426, a: 1}
+    - _Left1Color: {r: 1.1773236, g: 0.36358523, b: 0.58245295, a: 1}
+    - _Left2Color: {r: 0.5869862, g: 2.0469265, b: 0.8387001, a: 1}
+    - _Left2Color1: {r: 0.7207354, g: 3.77, b: 3.0129416, a: 1}
+    - _Left2Color2: {r: 22.825682, g: 30.932, b: 0, a: 1}
+    - _MainColor: {r: 1.8405883, g: 2.2449882, b: 2.384, a: 1}
+    - _RightColor: {r: 0.013970587, g: 0.060492646, b: 0.076, a: 1}

@@ -10,10 +10,11 @@
 			_RightBlurCenterX("右图模糊中心X",Float) = 0.5
 			_RightBlurIntensity("右图模糊权重",Range(0,0.05)) = 0.01
 			_RightOffsetX("右图偏移量X",float) = 0
-			[HDR]_Left2Color("Left2TexColor",Color) = (1,1,1,1)
+			[HDR]_Left2Color1("Left2TexColor1",Color) = (1,1,1,1)
+			[HDR]_Left2Color2("Left2TexColor2",Color) = (1,1,1,1)
 			_Left2IterationNumber("左二图迭代次数",Int) = 16
 			_Left2BlurCenterX("左二图模糊中心X",float) = 0.5
-			_Left2BlurIntensity("右图模糊权重",Range(0,0.05)) = 0.01
+			_Left2BlurIntensity("左二图模糊权重",Range(0,0.05)) = 0.01
 			_Left2OffsetX("左二图偏移量X",float) = 0
 			[HDR]_Left1Color("Left1TexColor",Color) = (1,1,1,1)
 			_Left1IterationNumber("左一图迭代次数",Int) = 16
@@ -72,7 +73,8 @@
 			fixed _Left1BlurIntensity;
 			fixed _Left2BlurIntensity;
 			fixed4 _Left1Color;
-			fixed4 _Left2Color;
+			fixed4 _Left2Color1;
+			fixed4 _Left2Color2;
 			fixed4 _RightColor;
 			float _BlurRadius;
 			fixed4 XMotionBlur(float2 texCoord, float BlurCenterX, fixed intensity, int IterationNumber, sampler2D tex);
@@ -82,6 +84,8 @@
 			fixed4 GetGrey(fixed4 c,float rate,fixed lineValue);
 			fixed4 SoftLight(fixed4 c1, fixed4 c2);
 			fixed4 FaceShadow(fixed4 c);
+			fixed4 AddNormal(fixed4 sr, fixed4 dr);
+			fixed4 gradient(fixed4 c1, fixed4 c2,float posX);
 
 			//顶点输入结构  
 			struct vertexInput
@@ -135,50 +139,61 @@
 			{
 				fixed4 colorMain;
 				colorMain = tex2D(_MainTex, i.texcoordMain);
-				colorMain = GetGrey(colorMain, 0.8, 0.55)*_MainColor;
+				colorMain = GetGrey(colorMain, 1.5, 0.9)*_MainColor;
 				colorMain = FaceShadow(colorMain);
 				
-				//fixed4 colorMask =fixed4(1-(0.4- i.texcoordMain.x)*(1/0.01), 1 - (0.4 - i.texcoordMain.x)*(1 / 0.01), 1 - (0.4 - i.texcoordMain.x)*(1 / 0.01),1);
 				
-				fixed4 colorMainShadow = colorMain* 0.02;
-				colorMain = lerp(colorMain, colorMainShadow, max(0, (1 - 0.5) / 0.15*(i.texcoordMain.x - 0.5)));
+				
+				fixed4 colorMainShadow = lerp(colorMain, fixed4(0, 0, 0, 1), max(0, (1 - 0.45) / 0.12*(i.texcoordMain.x - 0.45)));
+				
+				colorMain = colorMainShadow;
 
 				//与右图叠加
 				fixed4 colorRight;
 				colorRight = XMotionBlur(i.texcoordRight, _RightBlurCenterX, _RightBlurIntensity, _RightIterationNumber, _MainTex)*20;
-				colorRight = GetGrey(colorRight,1,0.4);
+
+				colorRight = GetGrey(colorRight,1.2,0.9);
+				
 				
 				fixed4 blendMR= ScreenBlend(colorMain,colorRight)*_RightColor;
+				blendMR= lerp(fixed4(0, 0, 0, 1), blendMR,max(0, (1 -0.3) / 0.12*(i.texcoordMain.y -0.01)));
 				fixed4 bumpColorR = tex2D(_BumpTex, i.texcoordRight);
 				bumpColorR = GetGrey(bumpColorR, 0.7, 0.6);
-				blendMR = fixed4(BlendAdd(blendMR, bumpColorR).rgb, 0);
-				blendMR *= colorRight/5;
+				blendMR = fixed4(BlendAdd(blendMR, bumpColorR).rgb, 1);
+				
+				//blendMR *= colorRight1/5;
 				fixed4 RMColor;
-				RMColor = lerp(colorMain,blendMR,max(0,(1/(1-0.59))*(i.texcoordMain.x-0.59)));
+				RMColor = lerp(colorMain,blendMR,max(0,(1/(1-0.6))*(i.texcoordMain.x-0.6)));
 
 				//与左二图叠加
 				fixed4 colorLeft2;
-				colorLeft2 = XMotionBlur(i.texcoordLeft2, _Left2BlurCenterX, _Left2BlurIntensity, _Left2IterationNumber, _OtherTex)*2;
-				//colorLeft2 = SimpleBlur(_OtherTex,i.texcoordLeft2);
-				colorLeft2 = GetGrey(colorLeft2, 1, 0.5);
+				fixed4 colorLeft2Raw = XMotionBlur(i.texcoordLeft2, _Left2BlurCenterX, _Left2BlurIntensity, _Left2IterationNumber, _OtherTex);
 				
-				fixed4 blendML2 = ScreenBlend(colorMain*lerp(0,1,i.texcoordMain.x), colorLeft2)*_Left2Color;
+				//colorLeft2 = SimpleBlur(_OtherTex,i.texcoordLeft2);
+				colorLeft2 = GetGrey(colorLeft2Raw, 1, 0.5);
+				colorLeft2 = lerp(fixed4(0.05, 0.05, 0.05, 1),colorLeft2, i.texcoordMain.y);
+				colorLeft2 *= colorLeft2Raw*1.6*gradient(_Left2Color1,_Left2Color2,i.texcoordMain.x-0.35);
+				
+				fixed4 blendML2 =AddNormal(colorLeft2,colorMain);
+				//blendML2=lerp(fixed4(0, 0, 0, 1), blendML2, max(0, (1 - 0.78) / 0.12*(i.texcoordMain.y )));
 				fixed4 bumpColorL2 = tex2D(_BumpTex,i.texcoordLeft2);
 				bumpColorL2 = GetGrey(bumpColorL2, 0.9, 0.6);
-				blendML2 = fixed4(BlendAdd(blendML2, bumpColorL2).rgb,0.2);
-				blendML2 *= colorLeft2*1.3;
+				blendML2 = fixed4(BlendAdd(blendML2, bumpColorL2).rgb,0.6);
+				
 				
 				fixed4 L2MColor;
-				L2MColor = lerp(RMColor, blendML2, max(0, (1 / (1 - 0.46))*(0.46 - i.texcoordMain.x)));
+				L2MColor = lerp(RMColor, blendML2, max(0, (1 / (1 - 0.63))*(0.55 - i.texcoordMain.x)));
 
-				//与左三图叠加
+				//与左一图叠加
 				fixed4 colorLeft1;
 				colorLeft1 = XMotionBlur(i.texcoordLeft1, _Left1BlurCenterX, _Left1BlurIntensity, _Left1IterationNumber, _MainTex)*15;
+				colorLeft1 = lerp(fixed4(0, 0, 0, 1), colorLeft1, i.texcoordMain.y-0.05);
 				colorLeft1 = GetGrey(colorLeft1, 1, 0.5);
+				
 				fixed4 blendML1 = ScreenBlend(colorMain, colorLeft1)*_Left1Color;
 				fixed4 bumpColorL1 = tex2D(_BumpTex, i.texcoordLeft1);
 				bumpColorL1 = GetGrey(bumpColorL1, 0.9, 0.5);
-				blendML1 = fixed4(BlendAdd(blendML1, bumpColorL1).rgb, 0.2);
+				blendML1 = fixed4(BlendAdd(blendML1, bumpColorL1).rgb, 0);
 				fixed4 L1MColor;
 				L1MColor = lerp(L2MColor, blendML1, max(0, (1 / (1 - 0.35))*(0.35 - i.texcoordMain.x)));
 
@@ -245,9 +260,9 @@
 				{
 					g *= rate;
 				}
-				else {
+				/*else {
 					g /= rate;
-				}
+				}*/
 				return fixed4(g, g, g, c.a);
 			}
 
@@ -282,6 +297,38 @@
 			fixed4 BlendAdd(fixed4 c1, fixed4 c2)
 			{
 				return (c1 + c1 * c2 / (fixed4(1, 1, 1, 1) - c2));
+			}
+
+			//正常叠加
+			fixed4 AddNormal(fixed4 src, fixed4 des)
+			{
+				fixed sr = src.a;
+				fixed dr = 1.0 - sr;
+				fixed4 src1 = fixed4(0,0,0,0);
+				fixed4 des1 = src1;
+
+				if (sr == 0.0) return des;
+				if (des.a == 0.0 || dr == 0.0) return src;
+
+				src.r = src.r > 0.0 ? src.r : 0.0;
+				src.g = src.g > 0.0 ? src.g : 0.0;
+				src.b = src.b > 0.0 ? src.b : 0.0;
+				src.a = src.a > 0.0 ? src.a : 0.0;
+				src1 = fixed4(sr*src.r, sr*src.g, sr*src.b, sr*src.a);
+
+				des.r = des.r > 0.0 ? des.r : 0.0;
+				des.g = des.g > 0.0 ? des.g : 0.0;
+				des.b = des.b > 0.0 ? des.b : 0.0;
+				des.a = des.a > 0.0 ? des.a : 0.0;
+				des1 = fixed4(dr*des.r, dr*des.g, dr*des.b, dr*des.a);
+
+				return src1 + des1;
+			}
+
+			//渐变颜色
+			fixed4 gradient(fixed4 c1,fixed4 c2,float posX)
+			{
+				return lerp(c1, c2, posX);
 			}
 			//===========结束CG着色器语言编写模块===========  
 			ENDCG
